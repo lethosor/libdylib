@@ -165,7 +165,7 @@ LIBDYLIB_DEFINE(short, find_all)(DynamicLibrary *lib, ...)
     va_start(args, lib);
     while (ret && (cursym = va_arg(args, const char*)))
     {
-        if (LIBDYLIB_NAME(lookup)(lib, cursym))
+        if (!LIBDYLIB_NAME(lookup)(lib, cursym))
             ret = 0;
     }
     va_end(args);
