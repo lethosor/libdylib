@@ -10,8 +10,10 @@ using libdylib::DynamicLibrary;
 
 #define ERR_MAX_SIZE 2048
 static char last_err[ERR_MAX_SIZE];
+static short last_err_set = 0;
 void set_last_error(const char *s)
 {
+    last_err_set = 1;
     strncpy(last_err, s, ERR_MAX_SIZE);
 }
 
@@ -25,7 +27,7 @@ void unix_set_last_error()
     const char *e = dlerror();
     if (!e)
         e = "NULL error";
-
+    set_last_error(e);
 }
 
 LIBDYLIB_DEFINE(DynamicLibrary*, open)(const char *path)
@@ -67,9 +69,8 @@ void win_set_last_error()
 {
     // Based on http://stackoverflow.com/questions/1387064
     DWORD code = GetLastError();
-    const char *e = NULL;
     if (!code)
-        e = "NULL error";
+        set_last_error("NULL error");
     else
     {
         LPSTR buf = NULL;
@@ -173,5 +174,7 @@ LIBDYLIB_DEFINE(short, find_all)(DynamicLibrary *lib, ...)
 
 LIBDYLIB_DEFINE(const char*, last_error)()
 {
+    if (!last_err_set)
+        return NULL;
     return last_err;
 }
