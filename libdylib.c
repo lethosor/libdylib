@@ -136,6 +136,12 @@ LIBDYLIB_DEFINE(DynamicLibrary*, open_list)(const char *path, ...)
     return ret;
 }
 
+LIBDYLIB_DEFINE(short, bind)(DynamicLibrary *lib, const char *symbol, void **dest)
+{
+    *dest = LIBDYLIB_NAME(lookup)(lib, symbol);
+    return *dest != 0;
+}
+
 LIBDYLIB_DEFINE(short, find)(DynamicLibrary *lib, const char *symbol)
 {
     return LIBDYLIB_NAME(lookup)(lib, symbol) != NULL;

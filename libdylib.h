@@ -60,6 +60,13 @@ namespace libdylib {
     // return the address of a symbol in a library, or NULL if the symbol does not exist
     LIBDYLIB_DECLARE(void*, lookup)(DynamicLibrary *lib, const char *symbol);
 
+    // set the contents of dest to the result of lookup(lib, symbol) and returns 1,
+    // or set dest to NULL and returns 0 if the symbol was not found
+    LIBDYLIB_DECLARE(short, bind)(DynamicLibrary *lib, const char *symbol, void **dest);
+    // helper macros - note that dest is a simple pointer, NOT a pointer to a pointer
+    #define LIBDYLIB_BIND(lib, symbol, dest) LIBDYLIB_NAME(bind)(lib, symbol, (void**)&dest)
+    #define LIBDYLIB_BINDNAME(lib, name) LIBDYLIB_BIND(lib, #name, name)
+
     // check for the existence of a symbol in a library
     LIBDYLIB_DECLARE(short, find)(DynamicLibrary *lib, const char *symbol);
 
