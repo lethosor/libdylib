@@ -8,7 +8,7 @@
 namespace libdylib {
     class dylib {
     protected:
-        dylib_ref *handle;
+        dylib_ref handle;
     public:
         dylib(const char *path = NULL);
         ~dylib();
@@ -25,8 +25,8 @@ namespace libdylib {
         // Note that these functions use the 'handle' member internally regardless
         // of the first argument passed here (which is needed to pass through
         // all remaining arguments properly)
-        bool find_any(dylib_ref *unused, ...);
-        bool find_all(dylib_ref *unused, ...);
+        bool find_any(dylib_ref unused, ...);
+        bool find_all(dylib_ref unused, ...);
 
         template<typename T>
         bool bind(const char *symbol, T* &dest) {
@@ -39,7 +39,7 @@ namespace libdylib {
         }
         #define DYLIB_BINDNAME(lib, name) lib.bind(#name, name)
 
-        inline dylib_ref *get_handle() { return handle; }
+        inline dylib_ref get_handle() { return handle; }
         inline bool is_open() { return handle != NULL; }
     };
     class dylib_self : public dylib {

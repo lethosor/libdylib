@@ -52,7 +52,7 @@ bool dylib::find(const char *symbol)
     return libdylib::find(handle, symbol);
 }
 
-bool dylib::find_any(dylib_ref *unused, ...)
+bool dylib::find_any(dylib_ref unused, ...)
 {
     va_list args;
     va_start(args, unused);
@@ -61,7 +61,7 @@ bool dylib::find_any(dylib_ref *unused, ...)
     return ret;
 }
 
-bool dylib::find_all(dylib_ref *unused, ...)
+bool dylib::find_all(dylib_ref unused, ...)
 {
     va_list args;
     va_start(args, unused);

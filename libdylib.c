@@ -30,20 +30,20 @@ void unix_set_last_error()
     set_last_error(e);
 }
 
-LIBDYLIB_DEFINE(dylib_ref*, open)(const char *path)
+LIBDYLIB_DEFINE(dylib_ref, open)(const char *path)
 {
-    dylib_ref *lib = (dylib_ref*)dlopen(path, RTLD_LOCAL);
+    dylib_ref lib = (dylib_ref)dlopen(path, RTLD_LOCAL);
     if (!lib)
         unix_set_last_error();
     return lib;
 }
 
-LIBDYLIB_DEFINE(dylib_ref*, open_self)()
+LIBDYLIB_DEFINE(dylib_ref, open_self)()
 {
-    return (dylib_ref*)RTLD_SELF;
+    return (dylib_ref)RTLD_SELF;
 }
 
-LIBDYLIB_DEFINE(short, close)(dylib_ref *lib)
+LIBDYLIB_DEFINE(short, close)(dylib_ref lib)
 {
     check_null_handle(lib, 0);
     int ret = dlclose((void*)lib);
@@ -52,7 +52,7 @@ LIBDYLIB_DEFINE(short, close)(dylib_ref *lib)
     return ret == 0;
 }
 
-LIBDYLIB_DEFINE(void*, lookup)(dylib_ref *lib, const char *symbol)
+LIBDYLIB_DEFINE(void*, lookup)(dylib_ref lib, const char *symbol)
 {
     check_null_handle(lib, NULL);
     void *ret = dlsym((void*)lib, symbol);
@@ -81,20 +81,20 @@ void win_set_last_error()
     }
 }
 
-LIBDYLIB_DEFINE(dylib_ref*, open)(const char *path)
+LIBDYLIB_DEFINE(dylib_ref, open)(const char *path)
 {
-    dylib_ref *lib = (dylib_ref*)LoadLibrary(path);
+    dylib_ref lib = (dylib_ref)LoadLibrary(path);
     if (!lib)
         win_set_last_error();
     return lib;
 }
 
-LIBDYLIB_DEFINE(dylib_ref*, open_self)()
+LIBDYLIB_DEFINE(dylib_ref, open_self)()
 {
-    return (dylib_ref*)GetModuleHandle(NULL);
+    return (dylib_ref)GetModuleHandle(NULL);
 }
 
-LIBDYLIB_DEFINE(short, close)(dylib_ref *lib)
+LIBDYLIB_DEFINE(short, close)(dylib_ref lib)
 {
     check_null_handle(lib, 0);
     BOOL ret = FreeLibrary((HMODULE)lib);
@@ -103,7 +103,7 @@ LIBDYLIB_DEFINE(short, close)(dylib_ref *lib)
     return ret == 0;
 }
 
-LIBDYLIB_DEFINE(void*, lookup)(dylib_ref *lib, const char *symbol)
+LIBDYLIB_DEFINE(void*, lookup)(dylib_ref lib, const char *symbol)
 {
     check_null_handle(lib, NULL);
     void *ret = (void*)GetProcAddress((HMODULE*)lib, symbol);
@@ -119,19 +119,19 @@ LIBDYLIB_DEFINE(void*, lookup)(dylib_ref *lib, const char *symbol)
 
 // All platforms
 
-LIBDYLIB_DEFINE(dylib_ref*, open_list)(const char *path, ...)
+LIBDYLIB_DEFINE(dylib_ref, open_list)(const char *path, ...)
 {
     va_list args;
     va_start(args, path);
-    dylib_ref *ret = LIBDYLIB_NAME(va_open_list)(path, args);
+    dylib_ref ret = LIBDYLIB_NAME(va_open_list)(path, args);
     va_end(args);
     return ret;
 }
 
-LIBDYLIB_DEFINE(dylib_ref*, va_open_list)(const char *path, va_list args)
+LIBDYLIB_DEFINE(dylib_ref, va_open_list)(const char *path, va_list args)
 {
     const char *curpath = path;
-    dylib_ref *ret = NULL;
+    dylib_ref ret = NULL;
     while (curpath)
     {
         ret = LIBDYLIB_NAME(open)(curpath);
@@ -142,18 +142,18 @@ LIBDYLIB_DEFINE(dylib_ref*, va_open_list)(const char *path, va_list args)
     return ret;
 }
 
-LIBDYLIB_DEFINE(short, bind)(dylib_ref *lib, const char *symbol, void **dest)
+LIBDYLIB_DEFINE(short, bind)(dylib_ref lib, const char *symbol, void **dest)
 {
     *dest = LIBDYLIB_NAME(lookup)(lib, symbol);
     return *dest != 0;
 }
 
-LIBDYLIB_DEFINE(short, find)(dylib_ref *lib, const char *symbol)
+LIBDYLIB_DEFINE(short, find)(dylib_ref lib, const char *symbol)
 {
     return LIBDYLIB_NAME(lookup)(lib, symbol) != NULL;
 }
 
-LIBDYLIB_DEFINE(short, find_any)(dylib_ref *lib, ...)
+LIBDYLIB_DEFINE(short, find_any)(dylib_ref lib, ...)
 {
     va_list args;
     va_start(args, lib);
@@ -161,7 +161,7 @@ LIBDYLIB_DEFINE(short, find_any)(dylib_ref *lib, ...)
     va_end(args);
     return ret;
 }
-LIBDYLIB_DEFINE(short, va_find_any)(dylib_ref *lib, va_list args)
+LIBDYLIB_DEFINE(short, va_find_any)(dylib_ref lib, va_list args)
 {
     const char *cursym = NULL;
     short ret = 0;
@@ -172,7 +172,7 @@ LIBDYLIB_DEFINE(short, va_find_any)(dylib_ref *lib, va_list args)
     }
     return ret;
 }
-LIBDYLIB_DEFINE(short, find_all)(dylib_ref *lib, ...)
+LIBDYLIB_DEFINE(short, find_all)(dylib_ref lib, ...)
 {
     va_list args;
     va_start(args, lib);
@@ -180,7 +180,7 @@ LIBDYLIB_DEFINE(short, find_all)(dylib_ref *lib, ...)
     va_end(args);
     return ret;
 }
-LIBDYLIB_DEFINE(short, va_find_all)(dylib_ref *lib, va_list args)
+LIBDYLIB_DEFINE(short, va_find_all)(dylib_ref lib, va_list args)
 {
     const char *cursym = NULL;
     short ret = 1;

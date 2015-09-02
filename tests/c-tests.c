@@ -5,7 +5,7 @@ void run_tests()
 {
     TEST(!libdylib_last_error());
 
-    dylib_ref *lib;
+    dylib_ref lib;
     TEST(lib = libdylib_open(lib_path));
     TEST(libdylib_close(lib));
     TEST(!libdylib_close(lib));
