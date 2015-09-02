@@ -1,5 +1,7 @@
 #include <stdarg.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "libdylib.h"
@@ -17,7 +19,9 @@ void set_last_error(const char *s)
     strncpy(last_err, s, ERR_MAX_SIZE);
 }
 
-#define check_null_handle(handle, ret) if (!handle) {set_last_error("NULL library handle"); return ret; }
+#define check_null_arg(arg, msg, ret) if (!arg) {set_last_error("NULL library handle"); return ret; }
+#define check_null_handle(handle, ret) check_null_arg(handle, "NULL library handle", ret)
+#define check_null_path(path, ret) check_null_arg(path, "NULL library path", ret)
 
 #if defined(LIBDYLIB_UNIX)
 #include <dlfcn.h>
@@ -32,6 +36,7 @@ void unix_set_last_error()
 
 LIBDYLIB_DEFINE(dylib_ref, open)(const char *path)
 {
+    check_null_path(path, NULL);
     dylib_ref lib = (dylib_ref)dlopen(path, RTLD_LOCAL);
     if (!lib)
         unix_set_last_error();
@@ -83,6 +88,7 @@ void win_set_last_error()
 
 LIBDYLIB_DEFINE(dylib_ref, open)(const char *path)
 {
+    check_null_path(path, NULL);
     dylib_ref lib = (dylib_ref)LoadLibrary(path);
     if (!lib)
         win_set_last_error();
@@ -140,6 +146,81 @@ LIBDYLIB_DEFINE(dylib_ref, va_open_list)(const char *path, va_list args)
         curpath = va_arg(args, const char*);
     }
     return ret;
+}
+
+const char *locate_patterns[] =
+#if defined(LIBDYLIB_APPLE)
+    {"lib%s.dylib", "%s.framework/%s", "%s.dylib", "lib%s.so", "%s.so"}
+#elif defined(LIBDYLIB_LINUX)
+    {"lib%s.so", "%s.so"}
+#elif defined(LIBDYLIB_WINDOWS)
+    {"%s.dll", "lib%s.dll"}
+#else
+    #warning "Falling back to default open_locate patterns"
+    {"lib%s.so", "%s.so"}
+#endif
+;
+
+size_t simple_format_length(const char *pattern, const char *str)
+{
+    size_t i = 0,
+        size = 0,
+        len_p = strlen(pattern),
+        len_s = strlen(str);
+    while (i < len_p)
+    {
+        if (pattern[i] == '%' && i + 1 < len_p && pattern[i + 1] == 's')
+        {
+            size += len_s;
+            i += 2;
+        }
+        else
+        {
+            ++size;
+            ++i;
+        }
+    }
+    return size;
+}
+
+char *simple_format(const char *pattern, const char *str)
+{
+    size_t i_in = 0,
+           i_out = 0,
+           len_p = strlen(pattern),
+           len_s = strlen(str);
+    char *out = (char*)calloc(simple_format_length(pattern, str) + 1, sizeof(char));
+    while (i_in < len_p)
+    {
+        if (pattern[i_in] == '%' && i_in + 1 < len_p && pattern[i_in + 1] == 's')
+        {
+            strcpy(out + i_out, str);
+            i_in += 2;
+            i_out += len_s;
+        }
+        else
+        {
+            out[i_out] = pattern[i_in];
+            ++i_in;
+            ++i_out;
+        }
+    }
+    return out;
+}
+
+LIBDYLIB_DEFINE(dylib_ref, open_locate)(const char *name)
+{
+    dylib_ref handle = NULL;
+    size_t i;
+    for (i = 0; i < (sizeof(locate_patterns) / sizeof(locate_patterns[0])); ++i)
+    {
+        char *path = simple_format(locate_patterns[i], name);
+        handle = LIBDYLIB_NAME(open)(path);
+        free(path);
+        if (handle)
+            return handle;
+    }
+    return LIBDYLIB_NAME(open)(name);
 }
 
 LIBDYLIB_DEFINE(short, bind)(dylib_ref lib, const char *symbol, void **dest)

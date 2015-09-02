@@ -10,8 +10,20 @@
     #define LIBDYLIB_UNIX
 #elif !defined(LIBDYLIB_WINDOWS) && defined(WIN32)
     #define LIBDYLIB_WINDOWS
-#else
+#endif
+#if !defined(LIBDYLIB_UNIX) && !defined(LIBDYLIB_WINDOWS)
     #error "Could not detect platform - try defining LIBDYLIB_UNIX or LIBDYLIB_WINDOWS appropriately"
+#endif
+#if defined(LIBDYLIB_UNIX)
+    #if defined(__APPLE__)
+        #ifndef LIBDYLIB_APPLE
+            #define LIBDYLIB_APPLE
+        #endif
+    #elif defined(__linux__) || defined(__linux)
+        #ifndef LIBDYLIB_LINUX
+            #define LIBDYLIB_LINUX
+        #endif
+    #endif
 #endif
 
 #ifdef LIBDYLIB_UNIX
@@ -65,6 +77,10 @@ namespace libdylib {
     // NOTE: the last argument must be NULL
     LIBDYLIB_DECLARE(dylib_ref, open_list)(const char *path, ...);
     LIBDYLIB_DECLARE(dylib_ref, va_open_list)(const char *path, va_list args);
+
+    // attempt to load a dynamic library using platform-specific prefixes/suffixes
+    // e.g. open_locate("foo") would attempt to open libfoo.so and foo.so on Linux
+    LIBDYLIB_DECLARE(dylib_ref, open_locate)(const char *name);
 
     // return the address of a symbol in a library, or NULL if the symbol does not exist
     LIBDYLIB_DECLARE(void*, lookup)(dylib_ref lib, const char *symbol);

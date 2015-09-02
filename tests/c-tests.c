@@ -13,6 +13,10 @@ void run_tests()
     TEST(!libdylib_open("foo"));
     TEST(libdylib_last_error());
 
+    dylib_ref plib;
+    TEST(plib = libdylib_open_locate(plib_path));
+    TEST(libdylib_close(plib));
+
     TEST_STRICT(lib);
 
     TEST(libdylib_open_list(lib_path, "foo", NULL));

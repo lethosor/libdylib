@@ -6,6 +6,7 @@
 static int sig_max = 32;
 int test_total = 0, test_passed = 0, test_failed = 0;
 int last_line = 0;
+const char *last_expr = NULL;
 
 void print_report(int finished)
 {
@@ -22,8 +23,11 @@ const char *safe_strsignal (int sig)
     return "Unknown signal";
 }
 
+short handler_run = 0;
 void handler (int sig) {
-    fprintf(stderr, "\n*** test at line %i crashed: %s\n", last_line, safe_strsignal(sig));
+    if (handler_run) exit(2);
+    handler_run = 1;
+    fprintf(stderr, "\n*** test at line %i crashed (%s)\n%s\n", last_line, last_expr, safe_strsignal(sig));
     ++test_failed;
     print_report(0);
     exit(1);
@@ -42,6 +46,7 @@ void install_handlers() {
 #define TEST_AUX(expr, on_fail) do {                                           \
     ++test_total;                                                              \
     last_line = __LINE__;                                                      \
+    last_expr = #expr;                                                         \
     if (!(expr)) {                                                             \
         ++test_failed;                                                         \
         fprintf(stderr, "line %i: test failed (%s)\n", __LINE__, #expr);       \
@@ -57,7 +62,7 @@ void install_handlers() {
 #define TEST_STRICT(expr) TEST_AUX(expr, {print_report(0); exit(1); })
 
 void run_tests();
-const char *lib_path = "testlib.dylib";
+const char *lib_path = "testlib.dylib", *plib_path = "ptestlib";
 
 int main(int argc, const char **argv)
 {

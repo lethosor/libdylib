@@ -6,10 +6,10 @@ using libdylib::dylib_self;
 
 dylib_self libdylib::self;
 
-dylib::dylib(const char *path) : handle(NULL)
+dylib::dylib(const char *path, bool locate) : handle(NULL)
 {
     if (path)
-        open(path);
+        open(path, locate);
 }
 
 dylib::~dylib()
@@ -18,12 +18,17 @@ dylib::~dylib()
         close();
 }
 
-bool dylib::open(const char *path)
+bool dylib::open(const char *path, bool locate)
 {
     if (handle)
         return false;
-    handle = libdylib::open(path);
+    handle = locate ? libdylib::open_locate(path) : libdylib::open(path);
     return handle;
+}
+
+bool dylib::open_locate(const char *name)
+{
+    return open(name, true);
 }
 
 bool dylib::open_list(const char *path, ...)

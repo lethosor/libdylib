@@ -10,11 +10,12 @@ namespace libdylib {
     protected:
         dylib_ref handle;
     public:
-        dylib(const char *path = NULL);
+        dylib(const char *path = NULL, bool locate = false);
         ~dylib();
-        bool open(const char *path);
-        inline bool open(std::string path) { return open(path.c_str()); }
+        bool open(const char *path, bool locate = false);
+        inline bool open(std::string path, bool locate = false) { return open(path.c_str(), locate); }
         bool open_list(const char *path, ...);
+        bool open_locate(const char *name);
         bool close();
 
         void *lookup(const char *symbol);

@@ -24,6 +24,10 @@ void run_tests()
     TEST(lib.close());
     TEST(!lib.open_list("foo", "foo", "bar", "baz", "", NULL));
 
+    dylib plib(plib_path, true);
+    TEST(plib.is_open());
+    TEST(dylib(lib_path, true).is_open());
+
     lib.open(lib_path);
     TEST_STRICT(lib.get_handle() && lib.is_open());
 

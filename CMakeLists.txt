@@ -1,25 +1,27 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8 FATAL_ERROR)
-PROJECT(libdylib)
+cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+project(libdylib)
 
-IF("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-   MESSAGE(FATAL_ERROR "In-source builds are not allowed.")
-ENDIF()
+if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+   message(FATAL_ERROR "In-source builds are not allowed.")
+endif()
 
-SET_SOURCE_FILES_PROPERTIES(libdylib.h PROPERTIES HEADER_FILE_ONLY TRUE)
-ADD_LIBRARY(libdylib STATIC libdylib.c libdylib.h)
-SET_TARGET_PROPERTIES(libdylib PROPERTIES PREFIX "")
-ADD_LIBRARY(libdylibxx STATIC libdylibxx.cpp)
-SET_TARGET_PROPERTIES(libdylibxx PROPERTIES PREFIX "")
+set_source_files_properties(libdylib.h PROPERTIES HEADER_FILE_ONLY TRUE)
+add_library(libdylib STATIC libdylib.c libdylib.h)
+set_target_properties(libdylib PROPERTIES PREFIX "")
+add_library(libdylibxx STATIC libdylibxx.cpp)
+set_target_properties(libdylibxx PROPERTIES PREFIX "")
 
-OPTION(BUILD_TESTS BOOL OFF)
-IF(BUILD_TESTS)
-    INCLUDE_DIRECTORIES(.)
-    ADD_EXECUTABLE(c-tests tests/c-tests.c)
-    TARGET_LINK_LIBRARIES(c-tests libdylib)
+option(BUILD_TESTS BOOL OFF)
+if(BUILD_TESTS)
+    include_directories(.)
+    add_executable(c-tests tests/c-tests.c)
+    target_link_libraries(c-tests libdylib)
 
-    ADD_EXECUTABLE(cpp-tests tests/cpp-tests.cpp)
-    TARGET_LINK_LIBRARIES(cpp-tests libdylibxx)
+    add_executable(cpp-tests tests/cpp-tests.cpp)
+    target_link_libraries(cpp-tests libdylibxx)
 
-    ADD_LIBRARY(testlib SHARED tests/lib.c)
-    SET_TARGET_PROPERTIES(testlib PROPERTIES PREFIX "" SUFFIX ".dylib") # For consistency, use "testlib.dylib"
-ENDIF(BUILD_TESTS)
+    add_library(testlib SHARED tests/lib.c)
+    set_target_properties(testlib PROPERTIES PREFIX "" SUFFIX ".dylib") # For consistency, use "testlib.dylib"
+
+    add_library(ptestlib SHARED tests/lib.c)
+endif(BUILD_TESTS)
