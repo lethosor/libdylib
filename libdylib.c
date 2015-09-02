@@ -5,7 +5,7 @@
 #include "libdylib.h"
 
 #ifdef LIBDYLIB_CXX
-using libdylib::DynamicLibrary;
+using libdylib::dylib_ref;
 #endif
 
 #define ERR_MAX_SIZE 2048
@@ -30,20 +30,20 @@ void unix_set_last_error()
     set_last_error(e);
 }
 
-LIBDYLIB_DEFINE(DynamicLibrary*, open)(const char *path)
+LIBDYLIB_DEFINE(dylib_ref*, open)(const char *path)
 {
-    DynamicLibrary *lib = (DynamicLibrary*)dlopen(path, RTLD_LOCAL);
+    dylib_ref *lib = (dylib_ref*)dlopen(path, RTLD_LOCAL);
     if (!lib)
         unix_set_last_error();
     return lib;
 }
 
-LIBDYLIB_DEFINE(DynamicLibrary*, self)()
+LIBDYLIB_DEFINE(dylib_ref*, open_self)()
 {
-    return (DynamicLibrary*)RTLD_SELF;
+    return (dylib_ref*)RTLD_SELF;
 }
 
-LIBDYLIB_DEFINE(short, close)(DynamicLibrary *lib)
+LIBDYLIB_DEFINE(short, close)(dylib_ref *lib)
 {
     check_null_handle(lib, 0);
     int ret = dlclose((void*)lib);
@@ -52,7 +52,7 @@ LIBDYLIB_DEFINE(short, close)(DynamicLibrary *lib)
     return ret == 0;
 }
 
-LIBDYLIB_DEFINE(void*, lookup)(DynamicLibrary *lib, const char *symbol)
+LIBDYLIB_DEFINE(void*, lookup)(dylib_ref *lib, const char *symbol)
 {
     check_null_handle(lib, NULL);
     void *ret = dlsym((void*)lib, symbol);
@@ -81,20 +81,20 @@ void win_set_last_error()
     }
 }
 
-LIBDYLIB_DEFINE(DynamicLibrary*, open)(const char *path)
+LIBDYLIB_DEFINE(dylib_ref*, open)(const char *path)
 {
-    DynamicLibrary *lib = (DynamicLibrary*)LoadLibrary(path);
+    dylib_ref *lib = (dylib_ref*)LoadLibrary(path);
     if (!lib)
         win_set_last_error();
     return lib;
 }
 
-LIBDYLIB_DEFINE(DynamicLibrary*, self)()
+LIBDYLIB_DEFINE(dylib_ref*, open_self)()
 {
-    return (DynamicLibrary*)GetModuleHandle(NULL);
+    return (dylib_ref*)GetModuleHandle(NULL);
 }
 
-LIBDYLIB_DEFINE(short, close)(DynamicLibrary *lib)
+LIBDYLIB_DEFINE(short, close)(dylib_ref *lib)
 {
     check_null_handle(lib, 0);
     BOOL ret = FreeLibrary((HMODULE)lib);
@@ -103,7 +103,7 @@ LIBDYLIB_DEFINE(short, close)(DynamicLibrary *lib)
     return ret == 0;
 }
 
-LIBDYLIB_DEFINE(void*, lookup)(DynamicLibrary *lib, const char *symbol)
+LIBDYLIB_DEFINE(void*, lookup)(dylib_ref *lib, const char *symbol)
 {
     check_null_handle(lib, NULL);
     void *ret = (void*)GetProcAddress((HMODULE*)lib, symbol);
@@ -119,12 +119,19 @@ LIBDYLIB_DEFINE(void*, lookup)(DynamicLibrary *lib, const char *symbol)
 
 // All platforms
 
-LIBDYLIB_DEFINE(DynamicLibrary*, open_list)(const char *path, ...)
+LIBDYLIB_DEFINE(dylib_ref*, open_list)(const char *path, ...)
 {
-    const char *curpath = path;
-    DynamicLibrary *ret = NULL;
     va_list args;
     va_start(args, path);
+    dylib_ref *ret = LIBDYLIB_NAME(va_open_list)(path, args);
+    va_end(args);
+    return ret;
+}
+
+LIBDYLIB_DEFINE(dylib_ref*, va_open_list)(const char *path, va_list args)
+{
+    const char *curpath = path;
+    dylib_ref *ret = NULL;
     while (curpath)
     {
         ret = LIBDYLIB_NAME(open)(curpath);
@@ -132,49 +139,56 @@ LIBDYLIB_DEFINE(DynamicLibrary*, open_list)(const char *path, ...)
             break;
         curpath = va_arg(args, const char*);
     }
-    va_end(args);
     return ret;
 }
 
-LIBDYLIB_DEFINE(short, bind)(DynamicLibrary *lib, const char *symbol, void **dest)
+LIBDYLIB_DEFINE(short, bind)(dylib_ref *lib, const char *symbol, void **dest)
 {
     *dest = LIBDYLIB_NAME(lookup)(lib, symbol);
     return *dest != 0;
 }
 
-LIBDYLIB_DEFINE(short, find)(DynamicLibrary *lib, const char *symbol)
+LIBDYLIB_DEFINE(short, find)(dylib_ref *lib, const char *symbol)
 {
     return LIBDYLIB_NAME(lookup)(lib, symbol) != NULL;
 }
 
-
-LIBDYLIB_DEFINE(short, find_any)(DynamicLibrary *lib, ...)
+LIBDYLIB_DEFINE(short, find_any)(dylib_ref *lib, ...)
+{
+    va_list args;
+    va_start(args, lib);
+    short ret = LIBDYLIB_NAME(va_find_any)(lib, args);
+    va_end(args);
+    return ret;
+}
+LIBDYLIB_DEFINE(short, va_find_any)(dylib_ref *lib, va_list args)
 {
     const char *cursym = NULL;
     short ret = 0;
-    va_list args;
-    va_start(args, lib);
     while (!ret && (cursym = va_arg(args, const char*)))
     {
         if (LIBDYLIB_NAME(lookup)(lib, cursym))
             ret = 1;
     }
+    return ret;
+}
+LIBDYLIB_DEFINE(short, find_all)(dylib_ref *lib, ...)
+{
+    va_list args;
+    va_start(args, lib);
+    short ret = LIBDYLIB_NAME(va_find_all)(lib, args);
     va_end(args);
     return ret;
 }
-
-LIBDYLIB_DEFINE(short, find_all)(DynamicLibrary *lib, ...)
+LIBDYLIB_DEFINE(short, va_find_all)(dylib_ref *lib, va_list args)
 {
     const char *cursym = NULL;
     short ret = 1;
-    va_list args;
-    va_start(args, lib);
     while (ret && (cursym = va_arg(args, const char*)))
     {
         if (!LIBDYLIB_NAME(lookup)(lib, cursym))
             ret = 0;
     }
-    va_end(args);
     return ret;
 }
 
