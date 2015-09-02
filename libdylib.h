@@ -1,8 +1,8 @@
 #ifndef LIBDYLIB_H
 #define LIBDYLIB_H
 
-#define LIBDYLIB_VERSION 0x010100
-#define LIBDYLIB_VERSION_STR "1.1"
+#define LIBDYLIB_VERSION 0x010200
+#define LIBDYLIB_VERSION_STR "1.2"
 
 #include <stdarg.h>
 
