@@ -62,6 +62,8 @@ const char *lib_path = "testlib.dylib";
 int main(int argc, const char **argv)
 {
     install_handlers();
+    printf("header version: %s (0x%08x)\n", LIBDYLIB_VERSION_STR, LIBDYLIB_VERSION);
+    printf("library version: %s (0x%08x)\n", LIBDYLIB_NAME(get_version_str)(), LIBDYLIB_NAME(get_version)());
     run_tests();
     print_report(1);
     return 0;

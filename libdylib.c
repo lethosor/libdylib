@@ -198,3 +198,13 @@ LIBDYLIB_DEFINE(const char*, last_error)()
         return NULL;
     return last_err;
 }
+
+LIBDYLIB_DEFINE(int, get_version)()
+{
+    return LIBDYLIB_VERSION;
+}
+
+LIBDYLIB_DEFINE(const char*, get_version_str())
+{
+    return LIBDYLIB_VERSION_STR;
+}

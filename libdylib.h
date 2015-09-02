@@ -1,6 +1,9 @@
 #ifndef LIBDYLIB_H
 #define LIBDYLIB_H
 
+#define LIBDYLIB_VERSION 0x010100
+#define LIBDYLIB_VERSION_STR "1.1"
+
 #include <stdarg.h>
 
 #if !defined(LIBDYLIB_UNIX) && (defined(__APPLE__) || defined(__linux__) || defined(__UNIX__))
@@ -85,6 +88,10 @@ namespace libdylib {
 
     // returns the last error message set by libdylib functions, or NULL
     LIBDYLIB_DECLARE(const char*, last_error)();
+
+    // return compiled version information
+    LIBDYLIB_DECLARE(int, get_version)();
+    LIBDYLIB_DECLARE(const char*, get_version_str)();
 
 #ifdef LIBDYLIB_CXX
 }
