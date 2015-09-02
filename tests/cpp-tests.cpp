@@ -50,4 +50,22 @@ void run_tests()
     TEST(libdylib::self.is_open());
     TEST(libdylib::self.get_handle() == libdylib::open_self());
     TEST(libdylib::self.find("main"));
+
+    {
+        dylib_ref *handle = NULL;
+        {
+            dylib lib2(lib_path);
+            handle = &(lib2.get_handle());
+            TEST(handle && *handle);
+        }
+        TEST(handle && !*handle);
+    }
+
+    {
+        dylib_ref *handle = NULL;
+        dylib lib2("foo");
+        handle = &(lib2.get_handle());
+        TEST(handle && !*handle);
+    }
+
 }

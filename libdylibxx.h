@@ -39,7 +39,7 @@ namespace libdylib {
         }
         #define DYLIB_BINDNAME(lib, name) lib.bind(#name, name)
 
-        inline dylib_ref get_handle() { return handle; }
+        inline dylib_ref &get_handle() { return handle; }
         inline bool is_open() { return handle != NULL; }
     };
     class dylib_self : public dylib {
