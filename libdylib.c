@@ -15,6 +15,8 @@ static char last_err[ERR_MAX_SIZE];
 static short last_err_set = 0;
 void set_last_error(const char *s)
 {
+    if (!s)
+        s = "NULL error";
     last_err_set = 1;
     strncpy(last_err, s, ERR_MAX_SIZE);
 }
@@ -28,10 +30,7 @@ void set_last_error(const char *s)
 
 void unix_set_last_error()
 {
-    const char *e = dlerror();
-    if (!e)
-        e = "NULL error";
-    set_last_error(e);
+    set_last_error(dlerror());
 }
 
 LIBDYLIB_DEFINE(dylib_ref, open)(const char *path)
@@ -75,13 +74,13 @@ void win_set_last_error()
     // Based on http://stackoverflow.com/questions/1387064
     DWORD code = GetLastError();
     if (!code)
-        set_last_error("NULL error");
+        set_last_error(NULL);
     else
     {
         LPSTR buf = NULL;
         size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
             NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&buf, 0, NULL);
-        set_last_error(buf);
+        set_last_error((const char*)buf);
         LocalFree(buf);
     }
 }
@@ -161,35 +160,22 @@ const char *locate_patterns[] =
 #endif
 ;
 
-size_t simple_format_length(const char *pattern, const char *str)
-{
-    size_t i = 0,
-        size = 0,
-        len_p = strlen(pattern),
-        len_s = strlen(str);
-    while (i < len_p)
-    {
-        if (pattern[i] == '%' && i + 1 < len_p && pattern[i + 1] == 's')
-        {
-            size += len_s;
-            i += 2;
-        }
-        else
-        {
-            ++size;
-            ++i;
-        }
-    }
-    return size;
-}
-
 char *simple_format(const char *pattern, const char *str)
 {
     size_t i_in = 0,
            i_out = 0,
            len_p = strlen(pattern),
-           len_s = strlen(str);
-    char *out = (char*)calloc(simple_format_length(pattern, str) + 1, sizeof(char));
+           len_s = strlen(str),
+           len_out = len_p;
+    {
+        const char *tmp = pattern;
+        while (tmp = strstr(tmp, "%s"))
+        {
+            len_out += len_s - 2;
+            ++tmp;
+        }
+    }
+    char *out = (char*)malloc((len_out + 1) * sizeof(char));
     while (i_in < len_p)
     {
         if (pattern[i_in] == '%' && i_in + 1 < len_p && pattern[i_in + 1] == 's')
@@ -205,6 +191,7 @@ char *simple_format(const char *pattern, const char *str)
             ++i_out;
         }
     }
+    out[len_out] = 0;
     return out;
 }
 
