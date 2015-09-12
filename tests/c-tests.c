@@ -16,6 +16,7 @@ void run_tests()
     dylib_ref plib;
     TEST(plib = libdylib_open_locate(plib_path));
     TEST(libdylib_close(plib));
+    TEST(!libdylib_open_locate("foo"));
 
     TEST_STRICT(lib);
 
