@@ -36,7 +36,7 @@ void unix_set_last_error()
 LIBDYLIB_DEFINE(dylib_ref, open)(const char *path)
 {
     check_null_path(path, NULL);
-    dylib_ref lib = (dylib_ref)dlopen(path, RTLD_LOCAL);
+    dylib_ref lib = (dylib_ref)dlopen(path, RTLD_LOCAL | RTLD_NOW);
     if (!lib)
         unix_set_last_error();
     return lib;
