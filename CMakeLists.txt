@@ -5,6 +5,10 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
    message(FATAL_ERROR "In-source builds are not allowed.")
 endif()
 
+if(APPLE)
+    set(CMAKE_MACOSX_RPATH 1)
+endif()
+
 set_source_files_properties(libdylib.h PROPERTIES HEADER_FILE_ONLY TRUE)
 add_library(libdylib STATIC libdylib.c libdylib.h)
 set_target_properties(libdylib PROPERTIES PREFIX "")
