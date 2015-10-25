@@ -178,17 +178,20 @@ char *simple_format(const char *pattern, const char *str)
     char *out = (char*)malloc((len_out + 1) * sizeof(char));
     while (i_in < len_p)
     {
-        if (pattern[i_in] == '%' && i_in + 1 < len_p && pattern[i_in + 1] == 's')
+        if (pattern[i_in] == '%' && pattern[i_in + 1] == 's')
         {
             strcpy(out + i_out, str);
             i_in += 2;
             i_out += len_s;
         }
+        else if (pattern[i_in] == '%' && pattern[i_in + 1] == '%')
+        {
+            out[i_out++] = '%';
+            i_in += 2;
+        }
         else
         {
-            out[i_out] = pattern[i_in];
-            ++i_in;
-            ++i_out;
+            out[i_out++] = pattern[i_in++];
         }
     }
     out[len_out] = 0;
