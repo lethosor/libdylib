@@ -12,7 +12,7 @@ using libdylib::dylib_ref;
 
 #define ERR_MAX_SIZE 2048
 static char last_err[ERR_MAX_SIZE];
-static short last_err_set = 0;
+static bool last_err_set = 0;
 void set_last_error(const char *s)
 {
     if (!s)
@@ -47,7 +47,7 @@ LIBDYLIB_DEFINE(dylib_ref, open_self)()
     return (dylib_ref)RTLD_SELF;
 }
 
-LIBDYLIB_DEFINE(short, close)(dylib_ref lib)
+LIBDYLIB_DEFINE(bool, close)(dylib_ref lib)
 {
     check_null_handle(lib, 0);
     int ret = dlclose((void*)lib);
@@ -99,7 +99,7 @@ LIBDYLIB_DEFINE(dylib_ref, open_self)()
     return (dylib_ref)GetModuleHandle(NULL);
 }
 
-LIBDYLIB_DEFINE(short, close)(dylib_ref lib)
+LIBDYLIB_DEFINE(bool, close)(dylib_ref lib)
 {
     check_null_handle(lib, 0);
     BOOL ret = FreeLibrary((HMODULE)lib);
@@ -210,29 +210,29 @@ LIBDYLIB_DEFINE(dylib_ref, open_locate)(const char *name)
     return LIBDYLIB_NAME(open)(name);
 }
 
-LIBDYLIB_DEFINE(short, bind)(dylib_ref lib, const char *symbol, void **dest)
+LIBDYLIB_DEFINE(bool, bind)(dylib_ref lib, const char *symbol, void **dest)
 {
     *dest = LIBDYLIB_NAME(lookup)(lib, symbol);
     return *dest != 0;
 }
 
-LIBDYLIB_DEFINE(short, find)(dylib_ref lib, const char *symbol)
+LIBDYLIB_DEFINE(bool, find)(dylib_ref lib, const char *symbol)
 {
     return LIBDYLIB_NAME(lookup)(lib, symbol) != NULL;
 }
 
-LIBDYLIB_DEFINE(short, find_any)(dylib_ref lib, ...)
+LIBDYLIB_DEFINE(bool, find_any)(dylib_ref lib, ...)
 {
     va_list args;
     va_start(args, lib);
-    short ret = LIBDYLIB_NAME(va_find_any)(lib, args);
+    bool ret = LIBDYLIB_NAME(va_find_any)(lib, args);
     va_end(args);
     return ret;
 }
-LIBDYLIB_DEFINE(short, va_find_any)(dylib_ref lib, va_list args)
+LIBDYLIB_DEFINE(bool, va_find_any)(dylib_ref lib, va_list args)
 {
     const char *cursym = NULL;
-    short ret = 0;
+    bool ret = 0;
     while (!ret && (cursym = va_arg(args, const char*)))
     {
         if (LIBDYLIB_NAME(lookup)(lib, cursym))
@@ -240,18 +240,18 @@ LIBDYLIB_DEFINE(short, va_find_any)(dylib_ref lib, va_list args)
     }
     return ret;
 }
-LIBDYLIB_DEFINE(short, find_all)(dylib_ref lib, ...)
+LIBDYLIB_DEFINE(bool, find_all)(dylib_ref lib, ...)
 {
     va_list args;
     va_start(args, lib);
-    short ret = LIBDYLIB_NAME(va_find_all)(lib, args);
+    bool ret = LIBDYLIB_NAME(va_find_all)(lib, args);
     va_end(args);
     return ret;
 }
-LIBDYLIB_DEFINE(short, va_find_all)(dylib_ref lib, va_list args)
+LIBDYLIB_DEFINE(bool, va_find_all)(dylib_ref lib, va_list args)
 {
     const char *cursym = NULL;
-    short ret = 1;
+    bool ret = 1;
     while (ret && (cursym = va_arg(args, const char*)))
     {
         if (!LIBDYLIB_NAME(lookup)(lib, cursym))

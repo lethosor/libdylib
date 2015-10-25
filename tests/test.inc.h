@@ -23,7 +23,7 @@ const char *safe_strsignal (int sig)
     return "Unknown signal";
 }
 
-short handler_run = 0;
+bool handler_run = 0;
 void handler (int sig) {
     if (handler_run) exit(2);
     handler_run = 1;

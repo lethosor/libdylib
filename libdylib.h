@@ -1,10 +1,11 @@
 #ifndef LIBDYLIB_H
 #define LIBDYLIB_H
 
-#define LIBDYLIB_VERSION 0x010300
-#define LIBDYLIB_VERSION_STR "1.3"
+#define LIBDYLIB_VERSION 0x010400
+#define LIBDYLIB_VERSION_STR "1.4"
 
 #include <stdarg.h>
+#include <stdbool.h>
 
 #if !defined(LIBDYLIB_UNIX) && (defined(__APPLE__) || defined(__linux__) || defined(__UNIX__))
     #define LIBDYLIB_UNIX
@@ -70,7 +71,7 @@ namespace libdylib {
 
     // close the specified dynamic library
     // returns 1 on success, 0 on failure
-    LIBDYLIB_DECLARE(short, close)(dylib_ref lib);
+    LIBDYLIB_DECLARE(bool, close)(dylib_ref lib);
 
     // attempt to load a dynamic library from all paths given
     // return a library handle of the first successfully-loaded library, or NULL if none were successfully loaded
@@ -87,20 +88,20 @@ namespace libdylib {
 
     // set the contents of dest to the result of lookup(lib, symbol) and returns 1,
     // or set dest to NULL and returns 0 if the symbol was not found
-    LIBDYLIB_DECLARE(short, bind)(dylib_ref lib, const char *symbol, void **dest);
+    LIBDYLIB_DECLARE(bool, bind)(dylib_ref lib, const char *symbol, void **dest);
     // helper macros - note that dest is a simple pointer, NOT a pointer to a pointer
     #define LIBDYLIB_BIND(lib, symbol, dest) LIBDYLIB_NAME(bind)(lib, symbol, (void**)&dest)
     #define LIBDYLIB_BINDNAME(lib, name) LIBDYLIB_BIND(lib, #name, name)
 
     // check for the existence of a symbol in a library
-    LIBDYLIB_DECLARE(short, find)(dylib_ref lib, const char *symbol);
+    LIBDYLIB_DECLARE(bool, find)(dylib_ref lib, const char *symbol);
 
     // check for the existence of any or all specified symbols in a library, respectively
     // NOTE: the last argument must be NULL (0 should not be relied on)
-    LIBDYLIB_DECLARE(short, find_any)(dylib_ref lib, ...);
-    LIBDYLIB_DECLARE(short, va_find_any)(dylib_ref lib, va_list args);
-    LIBDYLIB_DECLARE(short, find_all)(dylib_ref lib, ...);
-    LIBDYLIB_DECLARE(short, va_find_all)(dylib_ref lib, va_list args);
+    LIBDYLIB_DECLARE(bool, find_any)(dylib_ref lib, ...);
+    LIBDYLIB_DECLARE(bool, va_find_any)(dylib_ref lib, va_list args);
+    LIBDYLIB_DECLARE(bool, find_all)(dylib_ref lib, ...);
+    LIBDYLIB_DECLARE(bool, va_find_all)(dylib_ref lib, va_list args);
 
     // returns the last error message set by libdylib functions, or NULL
     LIBDYLIB_DECLARE(const char*, last_error)();
