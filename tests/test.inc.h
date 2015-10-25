@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef LIBDYLIB_UNIX
+    #include <unistd.h>
+#endif
 
 static int sig_max = 32;
 int test_total = 0, test_passed = 0, test_failed = 0;
@@ -25,12 +28,11 @@ const char *safe_strsignal (int sig)
 
 bool handler_run = 0;
 void handler (int sig) {
-    if (handler_run) exit(2);
+    if (handler_run) _exit(2);
     handler_run = 1;
     fprintf(stderr, "\n*** test at line %i crashed (%s)\n%s\n", last_line, last_expr, safe_strsignal(sig));
     ++test_failed;
-    print_report(0);
-    exit(1);
+    _exit(1);
 }
 
 void install_handlers() {
