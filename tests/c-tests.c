@@ -22,6 +22,9 @@ void run_tests()
 
     TEST(libdylib_open_list(lib_path, "foo", NULL));
     TEST(libdylib_open_list("foo", lib_path, NULL));
+    TEST(libdylib_get_path(libdylib_open_list(lib_path, "foo", NULL)) ==
+         libdylib_get_path(libdylib_open_list("foo", lib_path, NULL))
+    );
     TEST(!libdylib_open_list("foo", "foo", "bar", "baz", "", NULL));
 
     TEST(libdylib_lookup(lib, "sym1"));

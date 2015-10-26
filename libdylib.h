@@ -1,8 +1,8 @@
 #ifndef LIBDYLIB_H
 #define LIBDYLIB_H
 
-#define LIBDYLIB_VERSION 0x010400
-#define LIBDYLIB_VERSION_STR "1.4"
+#define LIBDYLIB_VERSION 0x020000
+#define LIBDYLIB_VERSION_STR "2.0.0"
 
 #include <stdarg.h>
 #include <stdbool.h>
@@ -59,8 +59,9 @@
 namespace libdylib {
 #endif
 
-    // Empty struct
-    typedef struct dylib_ref_ {} *dylib_ref;
+    typedef struct dylib_data* dylib_ref;
+    LIBDYLIB_DECLARE(const void*, get_handle)(dylib_ref lib);
+    LIBDYLIB_DECLARE(const char*, get_path)(dylib_ref lib);
 
     // attempt to load a dynamic library from a path
     // return a library handle or NULL

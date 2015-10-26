@@ -12,6 +12,7 @@ namespace libdylib {
     public:
         dylib(const char *path = NULL, bool locate = false);
         ~dylib();
+
         bool open(const char *path, bool locate = false);
         inline bool open(std::string path, bool locate = false) { return open(path.c_str(), locate); }
         bool open_list(const char *path, ...);
@@ -41,6 +42,8 @@ namespace libdylib {
         #define DYLIB_BINDNAME(lib, name) lib.bind(#name, name)
 
         inline dylib_ref &get_handle() { return handle; }
+        inline const char *get_path() { return LIBDYLIB_NAME(get_path)(handle); }
+        inline const void *get_raw_handle() { return LIBDYLIB_NAME(get_handle)(handle); }
         inline bool is_open() { return handle != NULL; }
     };
     class dylib_self : public dylib {

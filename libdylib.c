@@ -8,12 +8,33 @@
 
 #ifdef LIBDYLIB_CXX
 using libdylib::dylib_ref;
+namespace libdylib {
 #endif
+struct dylib_data {
+    void *handle;
+    const char *path;
+    bool dyn_path; // true if path should be freed
+    bool freed;
+    bool is_self;
+};
+#ifdef LIBDYLIB_CXX
+}
+#endif
+
+LIBDYLIB_DEFINE(const void*, get_handle)(dylib_ref lib)
+{
+    return lib->handle;
+}
+
+LIBDYLIB_DEFINE(const char*, get_path)(dylib_ref lib)
+{
+    return lib->path;
+}
 
 #define ERR_MAX_SIZE 2048
 static char last_err[ERR_MAX_SIZE];
 static bool last_err_set = 0;
-void set_last_error(const char *s)
+static void set_last_error(const char *s)
 {
     if (!s)
         s = "NULL error";
@@ -21,55 +42,85 @@ void set_last_error(const char *s)
     strncpy(last_err, s, ERR_MAX_SIZE);
 }
 
-#define check_null_arg(arg, msg, ret) if (!arg) {set_last_error("NULL library handle"); return ret; }
+static dylib_ref dylib_ref_alloc (void *handle, const char *path)
+{
+    if (handle == NULL)
+        return NULL;
+    dylib_ref ref = NULL;
+    ref = (dylib_ref)malloc(sizeof(*ref));
+    ref->handle = handle;
+    ref->path = path;
+    ref->dyn_path = false;
+    ref->freed = false;
+    ref->is_self = false;
+    return ref;
+}
+
+static dylib_ref dylib_ref_alloc_dynamic (void *handle, char *path)
+{
+    dylib_ref ref = dylib_ref_alloc(handle, path);
+    if (ref == NULL)
+        return NULL;
+    ref->dyn_path = true;
+    return ref;
+}
+
+static void dylib_ref_free (dylib_ref ref)
+{
+    if (ref == NULL)
+        return;
+    if (ref->freed)
+        return;
+    ref->handle = NULL;
+    if (ref->dyn_path)
+        free((char*)ref->path);
+    ref->freed = true;
+    free((void*)ref);
+}
+
+static void platform_set_last_error();
+static void *platform_raw_open (const char *path);
+static void *platform_raw_open_self();
+static bool platform_raw_close (void *handle);
+static void *platform_raw_lookup (void *handle, const char *symbol);
+
+#define check_null_arg(arg, msg, ret) if (arg == NULL) {set_last_error(msg); return ret; }
 #define check_null_handle(handle, ret) check_null_arg(handle, "NULL library handle", ret)
 #define check_null_path(path, ret) check_null_arg(path, "NULL library path", ret)
 
 #if defined(LIBDYLIB_UNIX)
 #include <dlfcn.h>
 
-void unix_set_last_error()
+static void platform_set_last_error()
 {
     set_last_error(dlerror());
 }
 
-LIBDYLIB_DEFINE(dylib_ref, open)(const char *path)
+static void *platform_raw_open (const char *path)
 {
-    check_null_path(path, NULL);
-    dylib_ref lib = (dylib_ref)dlopen(path, RTLD_LOCAL | RTLD_NOW);
-    if (!lib)
-        unix_set_last_error();
-    return lib;
+    return (void*)dlopen(path, RTLD_LOCAL | RTLD_NOW);
 }
 
-LIBDYLIB_DEFINE(dylib_ref, open_self)()
+static void *platform_raw_open_self()
 {
-    return (dylib_ref)RTLD_SELF;
+    return (void*)RTLD_SELF;
 }
 
-LIBDYLIB_DEFINE(bool, close)(dylib_ref lib)
+static bool platform_raw_close (void *handle)
 {
-    check_null_handle(lib, 0);
-    int ret = dlclose((void*)lib);
-    if (ret != 0)
-        unix_set_last_error();
-    return ret == 0;
+    return dlclose(handle) == 0;
 }
 
-LIBDYLIB_DEFINE(void*, lookup)(dylib_ref lib, const char *symbol)
+static void *platform_raw_lookup (void *handle, const char *symbol)
 {
-    check_null_handle(lib, NULL);
-    void *ret = dlsym((void*)lib, symbol);
-    if (!ret)
-        unix_set_last_error();
-    return ret;
+    return dlsym(handle, symbol);
 }
 
 // end LIBDYLIB_UNIX
 #elif defined(LIBDYLIB_WINDOWS)
 #include <Windows.h>
 
-void win_set_last_error()
+static void platform_set_last_error()
 {
     // Based on http://stackoverflow.com/questions/1387064
     DWORD code = GetLastError();
@@ -85,36 +136,24 @@ void win_set_last_error()
     }
 }
 
-LIBDYLIB_DEFINE(dylib_ref, open)(const char *path)
+static void *platform_raw_open (const char *path)
 {
-    check_null_path(path, NULL);
-    dylib_ref lib = (dylib_ref)LoadLibrary(path);
-    if (!lib)
-        win_set_last_error();
-    return lib;
+    return (void*)LoadLibrary(path);
 }
 
-LIBDYLIB_DEFINE(dylib_ref, open_self)()
+static void *platform_raw_open_self()
 {
-    return (dylib_ref)GetModuleHandle(NULL);
+    return (void*)GetModuleHandle(NULL);
 }
 
-LIBDYLIB_DEFINE(bool, close)(dylib_ref lib)
+static bool platform_raw_close (void *handle)
 {
-    check_null_handle(lib, 0);
-    BOOL ret = FreeLibrary((HMODULE)lib);
-    if (ret != 0)
-        win_set_last_error();
-    return ret == 0;
+    return FreeLibrary((HMODULE)handle);
 }
 
-LIBDYLIB_DEFINE(void*, lookup)(dylib_ref lib, const char *symbol)
+static void *platform_raw_lookup (void *handle, const char *symbol)
 {
-    check_null_handle(lib, NULL);
-    void *ret = (void*)GetProcAddress((HMODULE*)lib, symbol);
-    if (!ret)
-        win_set_last_error();
-    return ret;
+    return (void*)GetProcAddress((HMODULE)lib->handle, symbol);
 }
 
 // end LIBDYLIB_WINDOWS
@@ -123,6 +162,47 @@ LIBDYLIB_DEFINE(void*, lookup)(dylib_ref lib, const char *symbol)
 #endif
 
 // All platforms
+
+LIBDYLIB_DEFINE(dylib_ref, open)(const char *path)
+{
+    check_null_path(path, NULL);
+    dylib_ref lib = dylib_ref_alloc(platform_raw_open(path), path);
+    if (lib == NULL)
+        platform_set_last_error();
+    return lib;
+}
+
+LIBDYLIB_DEFINE(dylib_ref, open_self)()
+{
+    dylib_ref lib = dylib_ref_alloc(platform_raw_open_self(), NULL);
+    lib->is_self = true;
+    return lib;
+}
+
+LIBDYLIB_DEFINE(bool, close)(dylib_ref lib)
+{
+    check_null_handle(lib, 0);
+    if (lib->is_self)
+    {
+        dylib_ref_free(lib);
+        return true;
+    }
+    bool ret = platform_raw_close((void*)lib->handle);
+    if (!ret)
+        platform_set_last_error();
+    else
+        dylib_ref_free(lib);
+    return ret;
+}
+
+LIBDYLIB_DEFINE(void*, lookup)(dylib_ref lib, const char *symbol)
+{
+    check_null_handle(lib, NULL);
+    void *ret = platform_raw_lookup((void*)lib->handle, symbol);
+    if (ret == NULL)
+        platform_set_last_error();
+    return ret;
+}
 
 LIBDYLIB_DEFINE(dylib_ref, open_list)(const char *path, ...)
 {
@@ -200,17 +280,20 @@ char *simple_format(const char *pattern, const char *str)
 
 LIBDYLIB_DEFINE(dylib_ref, open_locate)(const char *name)
 {
-    dylib_ref handle = NULL;
+    dylib_ref lib = NULL;
     size_t i;
     for (i = 0; i < (sizeof(locate_patterns) / sizeof(locate_patterns[0])); ++i)
     {
         char *path = simple_format(locate_patterns[i], name);
-        handle = LIBDYLIB_NAME(open)(path);
-        free(path);
-        if (handle)
-            return handle;
+        lib = LIBDYLIB_NAME(open)(path);
+        if (lib != NULL)
+            break;
+        else
+            free(path);
     }
-    return LIBDYLIB_NAME(open)(name);
+    if (lib == NULL)
+        lib = LIBDYLIB_NAME(open)(name);
+    return lib;
 }
 
 LIBDYLIB_DEFINE(bool, bind)(dylib_ref lib, const char *symbol, void **dest)

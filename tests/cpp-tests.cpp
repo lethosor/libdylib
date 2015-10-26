@@ -53,7 +53,7 @@ void run_tests()
     TEST(returns_1() == 1);
 
     TEST(libdylib::self.is_open());
-    TEST(libdylib::self.get_handle() == libdylib::open_self());
+    TEST(libdylib::get_handle(libdylib::self.get_handle()) == libdylib::get_handle(libdylib::open_self()));
     TEST(libdylib::self.find("main"));
 
     {
