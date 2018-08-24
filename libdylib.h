@@ -9,7 +9,7 @@
 
 #if !defined(LIBDYLIB_UNIX) && (defined(__APPLE__) || defined(__linux__) || defined(__UNIX__))
     #define LIBDYLIB_UNIX
-#elif !defined(LIBDYLIB_WINDOWS) && defined(WIN32)
+#elif !defined(LIBDYLIB_WINDOWS) && ( defined(WIN32) || defined(_WIN32) )
     #define LIBDYLIB_WINDOWS
 #endif
 #if !defined(LIBDYLIB_UNIX) && !defined(LIBDYLIB_WINDOWS)
