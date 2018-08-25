@@ -153,7 +153,7 @@ static bool platform_raw_close (void *handle)
 
 static void *platform_raw_lookup (void *handle, const char *symbol)
 {
-    return (void*)GetProcAddress((HMODULE)lib->handle, symbol);
+    return (void*)GetProcAddress((HMODULE)handle, symbol);
 }
 
 // end LIBDYLIB_WINDOWS
