@@ -249,7 +249,7 @@ char *simple_format(const char *pattern, const char *str)
            len_out = len_p;
     {
         const char *tmp = pattern;
-        while (tmp = strstr(tmp, "%s"))
+        while ((tmp = strstr(tmp, "%s")))
         {
             len_out += len_s - 2;
             ++tmp;
