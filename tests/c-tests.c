@@ -8,7 +8,6 @@ void run_tests()
     dylib_ref lib;
     TEST(lib = libdylib_open(lib_path));
     TEST(libdylib_close(lib));
-    TEST(!libdylib_close(lib));
     TEST(lib = libdylib_open(lib_path));
     TEST(!libdylib_open("foo"));
     TEST(libdylib_last_error());
@@ -25,7 +24,7 @@ void run_tests()
     TEST(libdylib_get_path(libdylib_open_list(lib_path, "foo", NULL)) ==
          libdylib_get_path(libdylib_open_list("foo", lib_path, NULL))
     );
-    TEST(!libdylib_open_list("foo", "foo", "bar", "baz", "", NULL));
+    TEST(!libdylib_open_list("foo", "foo", "bar", "baz", NULL));
 
     TEST(libdylib_lookup(lib, "sym1"));
     TEST(libdylib_lookup(lib, "sym2"));

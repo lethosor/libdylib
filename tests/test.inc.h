@@ -32,7 +32,7 @@ void handler (int sig) {
     handler_run = 1;
     fprintf(stderr, "\n*** test at line %i crashed (%s)\n%s\n", last_line, last_expr, safe_strsignal(sig));
     ++test_failed;
-    _exit(1);
+    _exit(128 + sig);
 }
 
 void install_handlers() {

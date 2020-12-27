@@ -22,7 +22,7 @@ void run_tests()
     TEST(lib.close());
     TEST(lib.open_list("foo", lib_path, NULL));
     TEST(lib.close());
-    TEST(!lib.open_list("foo", "foo", "bar", "baz", "", NULL));
+    TEST(!lib.open_list("foo", "foo", "bar", "baz", NULL));
 
     dylib plib(plib_path, true);
     TEST(plib.is_open());

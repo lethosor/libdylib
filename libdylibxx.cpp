@@ -42,6 +42,8 @@ bool dylib::open_list(const char *path, ...)
 
 bool dylib::close()
 {
+    if (!handle)
+        return false;
     bool ret = libdylib::close(handle);
     handle = NULL;
     return ret;
