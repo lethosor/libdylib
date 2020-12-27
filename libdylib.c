@@ -103,7 +103,11 @@ static void *platform_raw_open (const char *path)
 
 static void *platform_raw_open_self()
 {
-    return (void*)RTLD_SELF;
+    #ifdef RTLD_SELF
+        return (void*)RTLD_SELF;
+    #else
+        return dlopen(NULL, RTLD_LAZY);
+    #endif
 }
 
 static bool platform_raw_close (void *handle)
@@ -175,6 +179,10 @@ LIBDYLIB_DEFINE(dylib_ref, open)(const char *path)
 LIBDYLIB_DEFINE(dylib_ref, open_self)()
 {
     dylib_ref lib = dylib_ref_alloc(platform_raw_open_self(), NULL);
+    if (lib == NULL) {
+        platform_set_last_error();
+        return NULL;
+    }
     lib->is_self = true;
     return lib;
 }
